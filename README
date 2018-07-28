@@ -1,0 +1,13 @@
+Author: Kavinsan Thavanesan
+
+Instructions:
+    -Drag with left mouse button and release to create a note
+    -Right click to remove a note
+    -Middle button to read stats about note
+    -Enter to generate a note
+    -backspace to delete all notes
+    -p to turn the movement on or off
+    -scroll to control speed of note movement
+    
+Purpose:
+    -Originally designed to simulate bin optimization problems

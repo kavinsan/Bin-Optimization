@@ -7,13 +7,19 @@ from Notes import *
 class square(tk.Tk):
 
     colors = ["white", "#363636", "crimson", "#CCCCFF","#E3CF57","beige","#6bf98a"]
-
+    toggle = True;
+    translate = False;
+    speed = 0.0025
+    WIDTH = 500
+    HEIGHT = 800
     
     def __init__(self):
         tk.Tk.__init__(self)
-    
+        self.protocol("WM_DELETE_WINDOW",  self.on_close)
+        self.title("Bin Optimization Simulator")
+  
         self.x = self.y = 0
-        self.canvas = tk.Canvas(self, width=1000, height=400, cursor="tcross", highlightthickness=0)
+        self.canvas = tk.Canvas(self, width = self.WIDTH, height = self.HEIGHT, cursor="tcross", highlightthickness=0)
         self.canvas.pack(side="top", fill="both", expand=True)
         self.canvas.bind("<Button-1>", self.on_button_press)
         self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
@@ -27,19 +33,76 @@ class square(tk.Tk):
         self.canvas.bind('<Motion>', self.position)
         self.resizable(False, False)
         
+        self.posLabel = self.canvas.create_text((self.WIDTH - 30, 10), text="",  font='bold')
+        self.pauseLabel = self.canvas.create_text((20, 10), text="OFF",  font='bold', fill="red")
+
+        self.canvas.bind("<p>", self.go)
+        self.canvas.bind("<MouseWheel>", self.changeSpeed)
+    
+    def on_close(self):
+        self.translate = False;
+        self.destroy()
+        
+    def changeSpeed(self,event):
+        nos = int((event.delta/120)) * 0.0005 * -1
+        if((self.speed + nos) <= 0):
+            return
+        if((self.speed + nos) >= 0.01):
+            return
+        
+        self.speed += nos
+        
+    def go(self, event):
+        yspeed = 2
+        xspeed = 1
+        self.translate = not self.translate; 
+        if(self.translate):
+            self.canvas.itemconfig(self.pauseLabel, fill="green", text="ON")
+        else:
+            self.canvas.itemconfig(self.pauseLabel, fill="red", text="OFF")
                
+        self.canvas.update()
+        
+        while(self.translate):
+            for rects in Notes.instances:
+
+                pos=self.canvas.coords(rects.data)
+                    
+                if(pos[3] >= 800 or pos[1] <= 0):
+                    rects.yspeed = -rects.yspeed
+
+                if(pos[2] >= 500 or pos[0] <= 0):
+                    rects.xspeed = -rects.xspeed
+                    
+                self.canvas.move(rects.data, rects.xspeed, rects.yspeed)
+                self.canvas.move(rects.label, rects.xspeed, rects.yspeed)
+                
+                rects.x0 = pos[0]
+                rects.y0 = pos[1]
+                rects.x1 = pos[2]
+                rects.y1 = pos[3]
+                                 
+            self.canvas.update()
+            time.sleep(self.speed)
+
+                 
     def position(self, event):
         self.mouseX = event.x
         self.mouseY = event.y
         #print("{} - {}".format(self.mouseX, self.mouseY))
+        text = str(self.mouseX) + "," + str(self.mouseY)
         
+        self.canvas.itemconfig(self.posLabel, text=text)
+        self.canvas.tag_raise(self.posLabel)
+        self.canvas.update()
+          
     def generate(self, event):
 
         while(True):
-            x0 = randint(0,1000)
-            y0 = randint(0,400)
-            x1 = randint(0,1000)
-            y1 = randint(0,400)
+            x0 = randint(0,self.WIDTH)
+            y0 = randint(0,self.HEIGHT)
+            x1 = randint(0,self.WIDTH)
+            y1 = randint(0,self.HEIGHT)
             
             if((x0 == x1) & (y0 == y1)):
                 continue;
@@ -61,10 +124,24 @@ class square(tk.Tk):
                 y0 = y1
                 y1 = tempY      
                   
-            if Notes(self.canvas,x0,x1,y0,y1,self.colors[randint(0,6)]) == None:
+            if Notes(self.canvas,x0,x0 + 50,y0,y0 + 50,self.generateColor()) == None:
                 continue
             else:
                 break;
+    
+    def generateColor(self):
+        count = 0;
+        color = "#"
+        while(count < 3):
+            val = hex(randint(0,255))[2:]
+            if(len(val) <= 1):
+                color += str(0) + val
+                count = count + 1;
+            else:
+                color += val
+                count = count + 1;
+        
+        return color
         
     def on_button_data(self,event):
         
@@ -127,8 +204,23 @@ class square(tk.Tk):
     def on_button_press(self, event):
         self.x = event.x
         self.y = event.y
-             
+        self.x1 = self.x + 1
+        self.y1 = self.y + 1
+        self.toggle = True;
+        
+        
+        data = self.canvas.create_rectangle(self.x,self.y,self.x1,self.y1, fill=None, outline="#fcaf62", width="2") 
+        
+        while(self.toggle == True):
+            self.canvas.coords(data, self.x, self.y, self.mouseX,self.mouseY)
+            self.canvas.update()
+            
+        self.canvas.delete(data)
+        
     def on_button_release(self, event):
+        
+        self.toggle = False;
+        
         x0,y0 = (self.x, self.y)
         x1,y1 = (event.x, event.y)
         
@@ -144,9 +236,12 @@ class square(tk.Tk):
             tempY = y0
             y0 = y1
             y1 = tempY
-
-        
-        Notes(self.canvas,x0,x1,y0,y1,self.colors[randint(0,6)])
+            
+        if((x1 > self.WIDTH) | (x0 < 0) | (y0 < 0) | (y1 > self.HEIGHT)):
+            return
+                   
+        #Notes(self.canvas,x0,x1,y0,y1,self.colors[randint(0,6)])
+        Notes(self.canvas,x0,x1,y0,y1,self.generateColor())
         
 if __name__ == "__main__":
     

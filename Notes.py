@@ -5,7 +5,7 @@ class Notes():
     instances = []
     label = []
     counter = 0;
-    
+  
     def __init__(self, canvas, x0, x1, y0, y1,color):
         self.canvas = canvas
         
@@ -16,7 +16,9 @@ class Notes():
         self.color = color
         
         self.minimum = 400
-        self.maximum = 40000
+        self.maximum = 1000000
+        self.xspeed = 1;
+        self.yspeed = 2;
         
         if(not self.create()):
 
@@ -105,6 +107,7 @@ class Notes():
         return length * width
     
     def border(self, area, minimum, maximum):
+        
         if not (minimum < (area) < maximum):
             return False;
         
@@ -151,9 +154,9 @@ class Notes():
             self.canvas.move(self.label, xspeed, yspeed)
             pos=self.canvas.coords(self.data)
             
-            if(pos[3] >= 400 or pos[1] <= 0):
+            if(pos[3] >= 500 or pos[1] <= 0):
                 yspeed = -yspeed
-            if(pos[2] >= 1000 or pos[0] <= 0):
+            if(pos[2] >= 800 or pos[0] <= 0):
                 xspeed = -xspeed
                             
             self.canvas.update()
