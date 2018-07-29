@@ -19,7 +19,7 @@ class square(tk.Tk):
         self.title("Bin Optimization Simulator")
   
         self.x = self.y = 0
-        self.canvas = tk.Canvas(self, width = self.WIDTH, height = self.HEIGHT, cursor="tcross", highlightthickness=0)
+        self.canvas = tk.Canvas(self, width = self.WIDTH, height = self.HEIGHT, cursor="tcross", highlightthickness=0, bg='white')
         self.canvas.pack(side="top", fill="both", expand=True)
         self.canvas.bind("<Button-1>", self.on_button_press)
         self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
@@ -38,6 +38,7 @@ class square(tk.Tk):
 
         self.canvas.bind("<p>", self.go)
         self.canvas.bind("<MouseWheel>", self.changeSpeed)
+
     
     def on_close(self):
         self.translate = False;
@@ -51,10 +52,9 @@ class square(tk.Tk):
             return
         
         self.speed += nos
-        
+            
     def go(self, event):
-        yspeed = 2
-        xspeed = 1
+
         self.translate = not self.translate; 
         if(self.translate):
             self.canvas.itemconfig(self.pauseLabel, fill="green", text="ON")
@@ -65,22 +65,41 @@ class square(tk.Tk):
         
         while(self.translate):
             for rects in Notes.instances:
-
-                pos=self.canvas.coords(rects.data)
-                    
-                if(pos[3] >= 800 or pos[1] <= 0):
-                    rects.yspeed = -rects.yspeed
-
-                if(pos[2] >= 500 or pos[0] <= 0):
-                    rects.xspeed = -rects.xspeed
-                    
-                self.canvas.move(rects.data, rects.xspeed, rects.yspeed)
-                self.canvas.move(rects.label, rects.xspeed, rects.yspeed)
                 
-                rects.x0 = pos[0]
-                rects.y0 = pos[1]
-                rects.x1 = pos[2]
-                rects.y1 = pos[3]
+                if(not rects.moveable):
+                    continue
+                
+                if((rects.x0 == self.mouseX) & (rects.y0 ==self.mouseY)):
+                    rects.moveable = False;
+                    continue
+                
+                pos=self.canvas.coords(rects.data)
+                x0 = pos[0]
+                y0 = pos[1]
+                x1 = pos[2]
+                y1 = pos[3]
+
+                                
+                if(x0 > self.mouseX):
+                    self.canvas.move(rects.data, -rects.xspeed, 0)
+                    self.canvas.move(rects.label, -rects.xspeed, 0)
+ 
+                elif(x0 < self.mouseX):
+                    self.canvas.move(rects.data, rects.xspeed, 0)
+                    self.canvas.move(rects.label, rects.xspeed, 0)
+                    
+                if(y0 > self.mouseY):
+                    self.canvas.move(rects.data, 0, -rects.yspeed)
+                    self.canvas.move(rects.label, 0, -rects.yspeed)
+ 
+                elif(y0 < self.mouseY):
+                    self.canvas.move(rects.data, 0, rects.yspeed)
+                    self.canvas.move(rects.label, 0, rects.yspeed)
+
+                rects.x0 = x0
+                rects.y0 = y0
+                rects.x1 = x1
+                rects.y1 = y1
                                  
             self.canvas.update()
             time.sleep(self.speed)
@@ -89,7 +108,7 @@ class square(tk.Tk):
     def position(self, event):
         self.mouseX = event.x
         self.mouseY = event.y
-        #print("{} - {}".format(self.mouseX, self.mouseY))
+        
         text = str(self.mouseX) + "," + str(self.mouseY)
         
         self.canvas.itemconfig(self.posLabel, text=text)
@@ -208,8 +227,9 @@ class square(tk.Tk):
         self.y1 = self.y + 1
         self.toggle = True;
         
-        
-        data = self.canvas.create_rectangle(self.x,self.y,self.x1,self.y1, fill=None, outline="#fcaf62", width="2") 
+        self.color = self.generateColor()
+        #data = self.canvas.create_rectangle(self.x,self.y,self.x1,self.y1, fill="#d9ebf7", outline="#f7feff", width="2") 
+        data = self.canvas.create_rectangle(self.x,self.y,self.x1,self.y1, fill=self.color, outline="#f7feff", width="2") 
         
         while(self.toggle == True):
             self.canvas.coords(data, self.x, self.y, self.mouseX,self.mouseY)
@@ -241,7 +261,7 @@ class square(tk.Tk):
             return
                    
         #Notes(self.canvas,x0,x1,y0,y1,self.colors[randint(0,6)])
-        Notes(self.canvas,x0,x1,y0,y1,self.generateColor())
+        Notes(self.canvas,x0,x1,y0,y1,self.color)
         
 if __name__ == "__main__":
     

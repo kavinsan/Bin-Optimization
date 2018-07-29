@@ -18,7 +18,9 @@ class Notes():
         self.minimum = 400
         self.maximum = 1000000
         self.xspeed = 1;
-        self.yspeed = 2;
+        self.yspeed = 1;
+        
+        self.moveable = True
         
         if(not self.create()):
 
@@ -101,10 +103,17 @@ class Notes():
             self.y0 = self.y1
             self.y1 = tempY
     
+    def width(self):
+        
+        return self.y1 - self.y0
+    
+    def height(self):
+        
+        return self.x1 - self.x0
+    
     def area(self):
-        length = self.x1 - self.x0
-        width = self.y1 - self.y0
-        return length * width
+         
+        return self.width() * self.height()
     
     def border(self, area, minimum, maximum):
         
@@ -171,4 +180,11 @@ class Notes():
             Notes.instances[self.id - 1].y1 = self.y1
             
             time.sleep(0.01)
+        return
+    
+    def reset(self):
+        
+        for notes in Notes.instances:
+            notes.moveable = True;
+        
         return
