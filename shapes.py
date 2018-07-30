@@ -17,7 +17,7 @@ class square(tk.Tk):
         tk.Tk.__init__(self)
         self.protocol("WM_DELETE_WINDOW",  self.on_close)
         self.title("Bin Optimization Simulator")
-  
+
         self.x = self.y = 0
         self.canvas = tk.Canvas(self, width = self.WIDTH, height = self.HEIGHT, cursor="tcross", highlightthickness=0, bg='white')
         self.canvas.pack(side="top", fill="both", expand=True)
@@ -33,12 +33,13 @@ class square(tk.Tk):
         self.canvas.bind('<Motion>', self.position)
         self.resizable(False, False)
         
-        self.posLabel = self.canvas.create_text((self.WIDTH - 30, 10), text="",  font='bold')
+        self.countLabel = self.canvas.create_text((self.WIDTH / 2, 10), text="Count: 0",  font='bold')
+        
+        self.posLabel = self.canvas.create_text((self.WIDTH - 30, 10), text="0,0",  font='bold')
         self.pauseLabel = self.canvas.create_text((20, 10), text="OFF",  font='bold', fill="red")
 
-        self.canvas.bind("<p>", self.go)
+        self.canvas.bind("<p>", self.pause)
         self.canvas.bind("<MouseWheel>", self.changeSpeed)
-
     
     def on_close(self):
         self.translate = False;
@@ -53,7 +54,7 @@ class square(tk.Tk):
         
         self.speed += nos
             
-    def go(self, event):
+    def pause(self, event):
 
         self.translate = not self.translate; 
         if(self.translate):
@@ -64,47 +65,50 @@ class square(tk.Tk):
         self.canvas.update()
         
         while(self.translate):
-            for rects in Notes.instances:
+            self.move(self.mouseX,self.mouseY)
+        
+    def move(self, desX0, desY0):
+        
+        for rects in Notes.instances:
                 
-                if(not rects.moveable):
-                    continue
+            if(not rects.moveable):
+                continue
                 
-                if((rects.x0 == self.mouseX) & (rects.y0 ==self.mouseY)):
-                    rects.moveable = False;
-                    continue
+            if((rects.x0 == desX0) & (rects.y0 == desY0)):
+                rects.moveable = False;
+                continue
                 
-                pos=self.canvas.coords(rects.data)
-                x0 = pos[0]
-                y0 = pos[1]
-                x1 = pos[2]
-                y1 = pos[3]
+            pos=self.canvas.coords(rects.data)
+            x0 = pos[0]
+            y0 = pos[1]
+            x1 = pos[2]
+            y1 = pos[3]
 
                                 
-                if(x0 > self.mouseX):
-                    self.canvas.move(rects.data, -rects.xspeed, 0)
-                    self.canvas.move(rects.label, -rects.xspeed, 0)
+            if(x0 > desX0):
+                self.canvas.move(rects.data, -rects.xspeed, 0)
+                self.canvas.move(rects.label, -rects.xspeed, 0)
  
-                elif(x0 < self.mouseX):
-                    self.canvas.move(rects.data, rects.xspeed, 0)
-                    self.canvas.move(rects.label, rects.xspeed, 0)
+            elif(x0 < desX0):
+                self.canvas.move(rects.data, rects.xspeed, 0)
+                self.canvas.move(rects.label, rects.xspeed, 0)
                     
-                if(y0 > self.mouseY):
-                    self.canvas.move(rects.data, 0, -rects.yspeed)
-                    self.canvas.move(rects.label, 0, -rects.yspeed)
+            if(y0 > desY0):
+                self.canvas.move(rects.data, 0, -rects.yspeed)
+                self.canvas.move(rects.label, 0, -rects.yspeed)
  
-                elif(y0 < self.mouseY):
-                    self.canvas.move(rects.data, 0, rects.yspeed)
-                    self.canvas.move(rects.label, 0, rects.yspeed)
+            elif(y0 < desY0):
+                self.canvas.move(rects.data, 0, rects.yspeed)
+                self.canvas.move(rects.label, 0, rects.yspeed)
 
-                rects.x0 = x0
-                rects.y0 = y0
-                rects.x1 = x1
-                rects.y1 = y1
+            rects.x0 = x0
+            rects.y0 = y0
+            rects.x1 = x1
+            rects.y1 = y1
                                  
-            self.canvas.update()
-            time.sleep(self.speed)
-
-                 
+        self.canvas.update()
+        time.sleep(self.speed)
+        
     def position(self, event):
         self.mouseX = event.x
         self.mouseY = event.y
@@ -116,7 +120,7 @@ class square(tk.Tk):
         self.canvas.update()
           
     def generate(self, event):
-
+        
         while(True):
             x0 = randint(0,self.WIDTH)
             y0 = randint(0,self.HEIGHT)
@@ -146,6 +150,10 @@ class square(tk.Tk):
             if Notes(self.canvas,x0,x0 + 50,y0,y0 + 50,self.generateColor()) == None:
                 continue
             else:
+                text = "Count: " + str(len(Notes.instances))
+                self.canvas.itemconfig(self.countLabel, text=text)
+                self.canvas.tag_raise(self.countLabel)
+                self.canvas.update()
                 break;
     
     def generateColor(self):
@@ -183,7 +191,6 @@ class square(tk.Tk):
         for rects in rectangles:
             print("[ID]: {}, [COLOR]: {}, [AREA]: {}, [x0]: {}, [y0]: {}, [x1]: {}, [y1]: {}".format(rects.id, rects.color, rects.area(), rects.x0, rects.y0, rects.x1, rects.y1))   
             
-
     def deleteAll(self,event):
         for rects in Notes.instances:
 
@@ -195,6 +202,10 @@ class square(tk.Tk):
             self.canvas.delete(label)
             
         Notes.instances = []
+        text = "Count: " + str(len(Notes.instances))
+        self.canvas.itemconfig(self.countLabel, text=text)
+        self.canvas.tag_raise(self.countLabel)
+        self.canvas.update()
         return
                   
     def on_button_delete(self,event):
@@ -218,6 +229,11 @@ class square(tk.Tk):
                 print("Deleted [ID]: {}, [COLOR]: {}".format(rects.id, "text"), rects.color)
                 self.canvas.delete(data)
                 self.canvas.delete(label)
+                
+                text = "Count: " + str(len(Notes.instances))
+                self.canvas.itemconfig(self.countLabel, text=text)
+                self.canvas.tag_raise(self.countLabel)
+                self.canvas.update()
                 return
             
     def on_button_press(self, event):
@@ -262,6 +278,11 @@ class square(tk.Tk):
                    
         #Notes(self.canvas,x0,x1,y0,y1,self.colors[randint(0,6)])
         Notes(self.canvas,x0,x1,y0,y1,self.color)
+        text = "Count: " + str(len(Notes.instances))
+        self.canvas.itemconfig(self.countLabel, text=text)
+        self.canvas.tag_raise(self.countLabel)
+        self.canvas.update()
+        
         
 if __name__ == "__main__":
     
