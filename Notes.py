@@ -4,7 +4,7 @@ import time
 class Notes():
     instances = []
     label = []
-    counter = 0;
+    counter = -1;
   
     def __init__(self, canvas, x0, x1, y0, y1,color):
         self.canvas = canvas
@@ -103,11 +103,11 @@ class Notes():
             self.y0 = self.y1
             self.y1 = tempY
     
-    def width(self):
+    def height(self):
         
         return self.y1 - self.y0
     
-    def height(self):
+    def width(self):
         
         return self.x1 - self.x0
     
@@ -157,15 +157,15 @@ class Notes():
     def move(self):
         yspeed = 2
         xspeed = 1
-        while(True):
+        while(self.moveable):
 
             self.canvas.move(self.data, xspeed, yspeed)
             self.canvas.move(self.label, xspeed, yspeed)
             pos=self.canvas.coords(self.data)
             
-            if(pos[3] >= 500 or pos[1] <= 0):
+            if(pos[3] >= 800 or pos[1] <= 0):
                 yspeed = -yspeed
-            if(pos[2] >= 800 or pos[0] <= 0):
+            if(pos[2] >= 500 or pos[0] <= 0):
                 xspeed = -xspeed
                             
             self.canvas.update()

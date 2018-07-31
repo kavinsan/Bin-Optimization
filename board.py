@@ -2,9 +2,10 @@ import tkinter as tk
 from random import randint
 import time
 from Notes import *
-
+from msilib.schema import RadioButton
+from Optimize import *
               
-class square(tk.Tk):
+class board(tk.Tk):
 
     colors = ["white", "#363636", "crimson", "#CCCCFF","#E3CF57","beige","#6bf98a"]
     toggle = True;
@@ -15,33 +16,41 @@ class square(tk.Tk):
     
     def __init__(self):
         tk.Tk.__init__(self)
+        
+        #Properties
         self.protocol("WM_DELETE_WINDOW",  self.on_close)
         self.title("Bin Optimization Simulator")
-
+        self.resizable(False, False)
+        self.canvas = tk.Canvas(self, width = self.WIDTH, height = self.HEIGHT, cursor="tcross", highlightthickness=2, bg='white', highlightbackground="#585858")
+        self.canvas.pack(side="left", fill="both", expand=True)
+        
         self.x = self.y = 0
-        self.canvas = tk.Canvas(self, width = self.WIDTH, height = self.HEIGHT, cursor="tcross", highlightthickness=0, bg='white')
-        self.canvas.pack(side="top", fill="both", expand=True)
+        
         self.canvas.bind("<Button-1>", self.on_button_press)
         self.canvas.bind("<ButtonRelease-1>", self.on_button_release)
         self.canvas.bind("<Button-3>", self.on_button_delete)
         self.canvas.bind("<Button-2>", self.on_button_data)
-    
+        self.canvas.bind("<MouseWheel>", self.changeSpeed)
+            
         self.canvas.focus_set()
         self.canvas.bind("<Return>", self.generate)
         self.canvas.bind("<BackSpace>", self.deleteAll)
-        
+        self.canvas.bind("<p>", self.pause)
+        self.canvas.bind("<o>", self.algorithm)
+             
         self.canvas.bind('<Motion>', self.position)
-        self.resizable(False, False)
         
+        #Header labels
         self.countLabel = self.canvas.create_text((self.WIDTH / 2, 10), text="Count: 0",  font='bold')
-        
         self.posLabel = self.canvas.create_text((self.WIDTH - 30, 10), text="0,0",  font='bold')
         self.pauseLabel = self.canvas.create_text((20, 10), text="OFF",  font='bold', fill="red")
-
-        self.canvas.bind("<p>", self.pause)
-        self.canvas.bind("<MouseWheel>", self.changeSpeed)
     
-    def on_close(self):
+    def algorithm(self, event):
+        optimize = Optimize(self.canvas,Notes.instances)
+        list = optimize.sort()
+        
+        
+    def on_close(self): #On close ensure motion functions are closed
         self.translate = False;
         self.destroy()
         
@@ -63,14 +72,20 @@ class square(tk.Tk):
             self.canvas.itemconfig(self.pauseLabel, fill="red", text="OFF")
                
         self.canvas.update()
-        
+                
         while(self.translate):
             self.move(self.mouseX,self.mouseY)
         
     def move(self, desX0, desY0):
         
+        optimize = Optimize(self.canvas,Notes.instances)
+        list = optimize.sort()
+        count = 0
+        
         for rects in Notes.instances:
-                
+            desX0 = list[count][0]
+            desY0 = list[count][1]
+            count = count + 1
             if(not rects.moveable):
                 continue
                 
@@ -109,7 +124,7 @@ class square(tk.Tk):
         self.canvas.update()
         time.sleep(self.speed)
         
-    def position(self, event):
+    def position(self, event): #Get the current position of the mouse
         self.mouseX = event.x
         self.mouseY = event.y
         
@@ -119,7 +134,7 @@ class square(tk.Tk):
         self.canvas.tag_raise(self.posLabel)
         self.canvas.update()
           
-    def generate(self, event):
+    def generate(self, event): #Generate a random sized and positioned note
         
         while(True):
             x0 = randint(0,self.WIDTH)
@@ -130,7 +145,7 @@ class square(tk.Tk):
             if((x0 == x1) & (y0 == y1)):
                 continue;
             
-            #Limit the square size minium and/or maximum
+            #Limit the square size minimize and/or maximum
             length = x1 - x0
             width = y1 - y0
             area = length * width
@@ -155,8 +170,25 @@ class square(tk.Tk):
                 self.canvas.tag_raise(self.countLabel)
                 self.canvas.update()
                 break;
-    
-    def generateColor(self):
+
+    def deleteAll(self,event):
+        for rects in Notes.instances:
+
+            data = rects.data
+            label = rects.label
+            
+            print("Deleted [ID]: {}, [COLOR]: {}".format(rects.id, "text"), rects.color)
+            self.canvas.delete(data)
+            self.canvas.delete(label)
+            
+        Notes.instances = []
+        text = "Count: " + str(len(Notes.instances))
+        self.canvas.itemconfig(self.countLabel, text=text)
+        self.canvas.tag_raise(self.countLabel)
+        self.canvas.update()
+        return
+        
+    def generateColor(self): #Generate a random color in hex value
         count = 0;
         color = "#"
         while(count < 3):
@@ -190,23 +222,6 @@ class square(tk.Tk):
         #If no rectangles are touched then print them all  
         for rects in rectangles:
             print("[ID]: {}, [COLOR]: {}, [AREA]: {}, [x0]: {}, [y0]: {}, [x1]: {}, [y1]: {}".format(rects.id, rects.color, rects.area(), rects.x0, rects.y0, rects.x1, rects.y1))   
-            
-    def deleteAll(self,event):
-        for rects in Notes.instances:
-
-            data = rects.data
-            label = rects.label
-            
-            print("Deleted [ID]: {}, [COLOR]: {}".format(rects.id, "text"), rects.color)
-            self.canvas.delete(data)
-            self.canvas.delete(label)
-            
-        Notes.instances = []
-        text = "Count: " + str(len(Notes.instances))
-        self.canvas.itemconfig(self.countLabel, text=text)
-        self.canvas.tag_raise(self.countLabel)
-        self.canvas.update()
-        return
                   
     def on_button_delete(self,event):
         self.x = event.x
@@ -286,5 +301,5 @@ class square(tk.Tk):
         
 if __name__ == "__main__":
     
-    app = square()
+    app = board()
     app.mainloop()
